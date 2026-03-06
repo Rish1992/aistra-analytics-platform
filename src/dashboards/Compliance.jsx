@@ -1,0 +1,324 @@
+import { useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
+import { DashboardHeader } from '../components/Layout';
+import {
+  Card, KPICard, Widget, DataTable, Badge, SectionTitle, TimeRangeSelector, GaugeKPICard
+} from '../components/UI';
+import {
+  MultiLineChart, StackedBarChart, HorizontalBar, GaugeChart, ComboChart, AreaChart, BarChart, Sparkline
+} from '../components/Charts';
+
+// ─── MOCK DATA ───
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const passRateSeries = [
+  { name: 'Pass Rate', data: [93.2, 93.8, 94.1, 94.5, 95.0, 95.2, 95.5, 95.8, 95.9, 96.0, 96.1, 96.2] },
+];
+const passRateBenchmark = [{ value: 95, label: 'Target 95%' }];
+
+const violationCategories = ['PCI', 'DNC', 'Script', 'Recording', 'Consent', 'Data'];
+const violationSegments = [
+  { name: 'PCI' },
+  { name: 'DNC' },
+  { name: 'Script' },
+  { name: 'Recording' },
+  { name: 'Consent' },
+  { name: 'Data' },
+];
+const violationData = [
+  [1, 3, 8, 2, 1, 0],
+  [0, 2, 6, 1, 2, 1],
+  [2, 1, 5, 3, 0, 0],
+  [0, 2, 7, 1, 1, 1],
+  [1, 0, 4, 2, 2, 0],
+  [0, 3, 6, 0, 1, 1],
+  [1, 1, 5, 2, 0, 0],
+  [0, 2, 3, 1, 1, 1],
+  [1, 0, 4, 2, 2, 0],
+  [0, 1, 5, 1, 0, 1],
+  [0, 2, 3, 0, 1, 0],
+  [0, 2, 4, 1, 1, 0],
+];
+
+const scriptAdherence = [
+  { label: 'Team Alpha', value: 96, suffix: '%' },
+  { label: 'Team Beta', value: 94, suffix: '%' },
+  { label: 'Team Gamma', value: 91, suffix: '%' },
+  { label: 'Team Delta', value: 88, suffix: '%' },
+  { label: 'Team Epsilon', value: 85, suffix: '%' },
+  { label: 'Team Zeta', value: 78, suffix: '%' },
+];
+
+const recordingGaps = [
+  { channel: 'Voice Inbound', coverage: '99.9%', gaps: 2, reason: 'System glitch', status: 'success' },
+  { channel: 'Voice Outbound', coverage: '99.8%', gaps: 5, reason: 'Agent bypass', status: 'success' },
+  { channel: 'Chat', coverage: '100%', gaps: 0, reason: 'N/A', status: 'success' },
+  { channel: 'Email', coverage: '100%', gaps: 0, reason: 'N/A', status: 'success' },
+  { channel: 'Screen Recording', coverage: '98.2%', gaps: 42, reason: 'VPN drops', status: 'warning' },
+];
+
+const retentionTable = [
+  { dataType: 'Call Recordings', policy: '24 months', actual: '24 months', compliance: 'Yes', nextPurge: '2026-04-01', status: 'success' },
+  { dataType: 'Chat Transcripts', policy: '18 months', actual: '18 months', compliance: 'Yes', nextPurge: '2026-05-15', status: 'success' },
+  { dataType: 'Screen Captures', policy: '12 months', actual: '14 months', compliance: 'No', nextPurge: 'Overdue', status: 'danger' },
+  { dataType: 'PII Records', policy: '6 months', actual: '6 months', compliance: 'Yes', nextPurge: '2026-03-30', status: 'success' },
+  { dataType: 'QA Evaluations', policy: '36 months', actual: '36 months', compliance: 'Yes', nextPurge: '2028-01-01', status: 'success' },
+  { dataType: 'Training Records', policy: '48 months', actual: '48 months', compliance: 'Yes', nextPurge: '2029-06-01', status: 'success' },
+];
+
+const auditSections = [
+  { label: 'Data Protection', value: 95, suffix: '%' },
+  { label: 'Access Controls', value: 92, suffix: '%' },
+  { label: 'Incident Response', value: 88, suffix: '%' },
+  { label: 'Training Compliance', value: 94, suffix: '%' },
+  { label: 'Documentation', value: 90, suffix: '%' },
+  { label: 'Change Management', value: 86, suffix: '%' },
+];
+
+const dncMonthly = [120, 105, 95, 88, 82, 78, 72, 68, 65, 60, 58, 55];
+const consentRate = [96.2, 96.5, 96.8, 97.0, 97.2, 97.5, 97.8, 98.0, 98.1, 98.3, 98.4, 98.5];
+
+export default function Compliance() {
+  const { t } = useTheme();
+  const [range, setRange] = useState('30d');
+
+  const themedPassRateSeries = passRateSeries.map((s, i) => ({ ...s, color: t.chart[i % t.chart.length] }));
+  const themedPassRateBenchmark = [{ ...passRateBenchmark[0], color: t.primary }];
+  const themedViolationSegments = violationSegments.map((s, i) => ({ ...s, color: t.chart[i % t.chart.length] }));
+  const themedScriptAdherence = scriptAdherence.map((r, i) => ({ ...r, color: t.chart[i % t.chart.length] }));
+  const themedAuditSections = auditSections.map((r, i) => ({ ...r, color: t.chart[i % t.chart.length] }));
+
+  return (
+    <div style={{ background: t.bg, minHeight: '100vh' }}>
+      <DashboardHeader
+        title="Compliance & Risk Dashboard"
+        subtitle="Regulatory compliance monitoring, audit readiness, and risk management"
+        actions={<TimeRangeSelector selected={range} onChange={setRange} />}
+      />
+
+      <div style={{ padding: 32 }}>
+        {/* KPI Row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>
+          <KPICard title="Pass Rate" value="96.2%" change="+1.2%" up={true} isGood={true} sparkData={[93.2, 94.1, 95.0, 95.5, 95.9, 96.2]} sparkColor={t.success} />
+          <KPICard title="Fatal Errors" value="3" change="-2" up={false} isGood={false} sparkData={[8, 6, 5, 4, 4, 3]} sparkColor={t.success} />
+          <KPICard title="PCI Violations" value="0" sparkData={[2, 1, 1, 0, 1, 0]} sparkColor={t.success} />
+          <KPICard title="DNC Violations" value="2" sparkData={[5, 4, 3, 3, 2, 2]} sparkColor={t.warning} />
+          <KPICard title="Recording Coverage" value="99.8%" sparkData={[99.2, 99.4, 99.5, 99.6, 99.7, 99.8]} sparkColor={t.primary} />
+          <KPICard title="Consent Rate" value="98.5%" sparkData={[96.2, 97.0, 97.5, 98.0, 98.3, 98.5]} sparkColor={t.info} />
+          <KPICard title="Audit Score" value="92" sparkData={[85, 87, 88, 89, 91, 92]} sparkColor={t.accent1} />
+        </div>
+
+        {/* Row 2: Pass Rate Trend + Violation Breakdown */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+          <Widget
+            title="Compliance Pass Rate Trend"
+            subtitle="Monthly evaluation pass rate with target line"
+            insight={{
+              description: "The compliance pass rate has climbed steadily from 93.2% in January to 96.2% in December, crossing the 95% target threshold in May and maintaining above-target performance for 8 consecutive months.",
+              dataSource: "QA evaluation platform compliance scoring -- automated and manual evaluations across all channels, calculated as percentage of interactions meeting all compliance criteria",
+              meaning: "The consistent upward trajectory indicates that compliance training initiatives and real-time monitoring are producing sustained behavior change. Crossing the 95% target midway through the year and continuing to improve suggests the program has moved beyond basic compliance into a culture of quality.",
+              actions: [
+                "Raise the target threshold to 97% for next quarter to maintain upward momentum",
+                "Identify the remaining 3.8% failure cases and categorize them to target specific coaching interventions",
+                "Recognize teams and agents who have maintained 100% pass rates to reinforce compliance culture",
+                "Implement real-time compliance alerts during calls to prevent violations before they occur"
+              ]
+            }}
+          >
+            <MultiLineChart series={themedPassRateSeries} labels={months} height={200} benchmarkLines={themedPassRateBenchmark} />
+          </Widget>
+
+          <Widget
+            title="Violation Breakdown"
+            subtitle="Monthly violations by category"
+            insight={{
+              description: "Script violations are the most frequent category, averaging 5 per month and accounting for nearly half of all violations. PCI violations have dropped to zero in recent months, while DNC violations show sporadic but persistent occurrences averaging 1.5 per month.",
+              dataSource: "Compliance monitoring system violation logs categorized by type, cross-referenced with QA evaluation flags and automated speech analytics detections",
+              meaning: "The dominance of Script violations suggests agents are deviating from required disclosures or mandatory verbiage -- a training issue rather than a willful compliance breach. The near-elimination of PCI violations indicates that payment card security protocols and system controls are highly effective.",
+              actions: [
+                "Launch a targeted script adherence campaign focusing on the most common deviation points",
+                "Implement real-time script prompts in the agent desktop to reduce omission-based violations",
+                "Investigate DNC violations to determine if they stem from list management gaps or agent behavior",
+                "Maintain current PCI controls and document them as a best-practice model for other violation categories"
+              ]
+            }}
+            legend={themedViolationSegments.map(s => (
+              <span key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: t.textSecondary }}>
+                <span style={{ width: 6, height: 6, borderRadius: 2, background: s.color }} /> {s.name}
+              </span>
+            ))}
+          >
+            <StackedBarChart
+              categories={months}
+              segments={themedViolationSegments}
+              data={violationData}
+              height={200}
+            />
+          </Widget>
+        </div>
+
+        {/* Row 3: Script Adherence + Recording Coverage */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+          <Widget
+            title="Script Adherence by Team"
+            subtitle="Percentage of interactions meeting script requirements"
+            insight={{
+              description: "Team Alpha leads at 96% script adherence, while Team Zeta trails significantly at 78% -- 12 points below the 90% target. The org average of 88.7% falls short of the 90% target, with 2 teams (Delta at 88%, Zeta at 78%) pulling the average down.",
+              dataSource: "Automated speech analytics and QA evaluation scorecards measuring required script element delivery across all evaluated interactions per team",
+              meaning: "The 18-point spread between top and bottom teams indicates inconsistent supervisor enforcement and coaching practices. Team Zeta's 78% is a compliance risk that could expose the organization to regulatory penalties if mandatory disclosures are being missed.",
+              actions: [
+                "Place Team Zeta on a compliance improvement plan with daily script adherence monitoring for 30 days",
+                "Have Team Alpha's supervisor share coaching techniques and best practices with other team leads",
+                "Deploy real-time script compliance prompts for teams below 90% to provide in-call guidance",
+                "Conduct a root-cause analysis on Team Zeta to determine if the issue is training, complexity of call types, or supervisor engagement"
+              ]
+            }}
+          >
+            <HorizontalBar items={themedScriptAdherence} maxVal={100} />
+            <div style={{ display: 'flex', gap: 12, marginTop: 16, padding: '10px 14px', background: t.surfaceAlt, borderRadius: 8 }}>
+              <div>
+                <div style={{ fontSize: 10, color: t.textTertiary }}>Org Average</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>88.7%</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, color: t.textTertiary }}>Target</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: t.primary }}>90%</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, color: t.textTertiary }}>Teams Below Target</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: t.danger }}>2</div>
+              </div>
+            </div>
+          </Widget>
+
+          <Card style={{ padding: 24 }}>
+            <SectionTitle subtitle="Recording coverage by channel with gap analysis">Recording Coverage</SectionTitle>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <GaugeChart value={99.8} min={95} max={100} size={140} label="Overall Coverage" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: t.textTertiary, marginBottom: 8 }}>Gap Summary</div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: t.text }}>49 <span style={{ fontSize: 12, fontWeight: 400, color: t.textTertiary }}>total gaps</span></div>
+                <div style={{ fontSize: 12, color: t.textSecondary, marginTop: 4 }}>42 from VPN drops, 5 agent bypass, 2 system</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {recordingGaps.map(item => (
+                <div key={item.channel} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 10px', background: t.surfaceAlt, borderRadius: 6 }}>
+                  <span style={{ fontSize: 12, color: t.text, flex: 1 }}>{item.channel}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: t.text }}>{item.coverage}</span>
+                  <Badge variant={item.status}>{item.gaps} gaps</Badge>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        {/* Row 4: Data Retention Table */}
+        <div style={{ marginBottom: 24 }}>
+          <DataTable
+            title="Data Retention Compliance"
+            columns={[
+              { key: 'dataType', label: 'Data Type' },
+              { key: 'policy', label: 'Retention Policy', align: 'center' },
+              { key: 'actual', label: 'Actual Retention', align: 'center' },
+              { key: 'compliance', label: 'Compliant', align: 'center', render: (val, row) => (
+                <Badge variant={row.status}>{val}</Badge>
+              )},
+              { key: 'nextPurge', label: 'Next Purge', align: 'center', render: (val) => (
+                <span style={{ color: val === 'Overdue' ? t.danger : t.textSecondary, fontWeight: val === 'Overdue' ? 700 : 400 }}>{val}</span>
+              )},
+            ]}
+            rows={retentionTable}
+            pageSize={6}
+          />
+        </div>
+
+        {/* Row 5: Audit Readiness + Section Bars */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16, marginBottom: 24 }}>
+          <Card style={{ padding: 24, textAlign: 'center' }}>
+            <SectionTitle subtitle="Overall readiness index">Audit Readiness</SectionTitle>
+            <GaugeChart value={92} min={0} max={100} size={200} label="Score: 92/100" />
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 12 }}>
+              <div>
+                <div style={{ fontSize: 10, color: t.textTertiary }}>Last Audit</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>Jan 2026</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, color: t.textTertiary }}>Next Audit</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: t.primary }}>Apr 2026</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, color: t.textTertiary }}>Open Findings</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: t.warning }}>4</div>
+              </div>
+            </div>
+          </Card>
+
+          <Widget
+            title="Audit Section Scores"
+            subtitle="Readiness by compliance domain"
+            insight={{
+              description: "Data Protection leads all sections at 95%, while Change Management is the weakest at 86%. Four of six sections score above 90%, contributing to an overall audit readiness score of 92. Incident Response at 88% has room for improvement before the April audit.",
+              dataSource: "Internal audit assessment rubrics scored quarterly by the compliance team, covering documentation reviews, control testing, and process walkthroughs across each domain",
+              meaning: "The overall score of 92 positions the organization well for the upcoming April audit, but the 4 open findings and the sub-90% scores in Change Management and Incident Response represent risk areas that auditors will likely scrutinize.",
+              actions: [
+                "Prioritize closing the 4 open audit findings before the April 2026 audit date",
+                "Develop a Change Management improvement plan targeting the 86% score -- focus on documentation of change approvals and post-implementation reviews",
+                "Conduct a tabletop incident response exercise to strengthen the 88% score and demonstrate audit readiness",
+                "Schedule a mock audit in March to identify any remaining gaps before the formal April assessment"
+              ]
+            }}
+          >
+            <HorizontalBar items={themedAuditSections} maxVal={100} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 16 }}>
+              {themedAuditSections.map(sec => (
+                <div key={sec.label} style={{ padding: '8px 12px', borderRadius: 8, background: t.surfaceAlt, textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, color: t.textTertiary }}>{sec.label}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: sec.value >= 90 ? t.success : sec.value >= 85 ? t.warning : t.danger }}>{sec.value}%</div>
+                </div>
+              ))}
+            </div>
+          </Widget>
+        </div>
+
+        {/* Row 6: DNC / Consent Combo */}
+        <Widget
+          title="DNC Scrub Rate & Consent Compliance"
+          subtitle="Monthly DNC match counts (bars) and consent rate trend (line)"
+          insight={{
+            description: "DNC matches have declined 54% over the year, dropping from 120 in January to 55 in December, indicating progressively cleaner outbound dialing lists. Simultaneously, consent rate has risen from 96.2% to 98.5%, reflecting improved opt-in capture processes.",
+            dataSource: "Outbound dialer DNC scrub logs recording matches against federal and state DNC registries, combined with consent management platform opt-in tracking across all customer touchpoints",
+            meaning: "The inverse relationship between declining DNC matches and rising consent rates validates that list hygiene improvements and consent capture enhancements are working in tandem. The remaining 55 monthly DNC matches likely stem from recently added registry entries not yet reflected in the scrub cycle.",
+            actions: [
+              "Increase DNC list refresh frequency from weekly to daily to catch new registry additions faster",
+              "Target 98.5%+ consent rate maintenance by embedding consent confirmation into every customer interaction workflow",
+              "Audit the remaining 55 monthly DNC matches to identify if specific campaigns or list sources are contributing disproportionately",
+              "Implement real-time DNC lookup at the point of dial to eliminate any residual matches from stale list data"
+            ]
+          }}
+          legend={[
+            <span key="dnc" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: t.textSecondary }}>
+              <span style={{ width: 8, height: 8, borderRadius: 2, background: t.danger }} /> DNC Matches
+            </span>,
+            <span key="consent" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: t.textSecondary }}>
+              <span style={{ width: 8, height: 3, borderRadius: 1, background: t.success }} /> Consent Rate %
+            </span>,
+          ]}
+        >
+          <ComboChart
+            barData={dncMonthly}
+            lineData={consentRate}
+            labels={months}
+            barColor={t.danger}
+            lineColor={t.success}
+            barLabel="DNC Matches"
+            lineLabel="Consent %"
+            height={200}
+          />
+        </Widget>
+      </div>
+    </div>
+  );
+}
