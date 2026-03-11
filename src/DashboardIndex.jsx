@@ -75,6 +75,18 @@ const dashboards = [
     icon: 'campaign', persona: 'Campaign Managers', refresh: 'Hourly', kpis: '7 KPIs',
     tags: ['Conversion', 'Dialer', 'Revenue'], status: 'live',
   },
+  {
+    id: 'deeptalk', path: '/deeptalk', title: 'Deeptalk Overview',
+    desc: 'Voice bot analytics — contacts, sessions, deployments',
+    icon: 'ai', persona: 'Product Leads, CTO', refresh: 'On-demand', kpis: '4 KPIs',
+    tags: ['Voice', 'Bots', 'Sessions', 'Live'], status: 'live',
+  },
+  {
+    id: 'deeptalk-bots', path: '/deeptalk/bots', title: 'Deeptalk Bots',
+    desc: 'Bot performance, LLM usage, and session analytics',
+    icon: 'agent', persona: 'AI/ML Leads', refresh: 'On-demand', kpis: '3 KPIs',
+    tags: ['LLM', 'Bots', 'Performance'], status: 'live',
+  },
 ];
 
 const platformKPIs = [
@@ -124,6 +136,16 @@ export default function DashboardIndex() {
               <div style={{ fontSize: 12, color: t.textTertiary }}>Create custom dashboards</div>
             </div>
           </button>
+          <button onClick={() => navigate('/talk-to-deeptalk')}
+            style={{ flex: 1, padding: '16px 20px', borderRadius: 12, border: `1px solid ${t.border}`, background: `linear-gradient(135deg, ${t.accent2Light || t.primaryLight}, ${t.surface})`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, transition: 'all 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = t.shadowMd}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: t.gradient2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>{icons.talk}</div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: t.text }}>Talk to Deeptalk</div>
+              <div style={{ fontSize: 12, color: t.textTertiary }}>Query live MongoDB data</div>
+            </div>
+          </button>
         </div>
 
         {/* Dashboard Grid */}
@@ -164,7 +186,7 @@ export default function DashboardIndex() {
         <div style={{ marginTop: 32, padding: '24px', borderRadius: 12, background: t.surfaceAlt, border: `1px solid ${t.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 600, color: t.text }}>Aistra Analytics Platform v2.0</div>
-            <div style={{ fontSize: 12, color: t.textTertiary }}>14 Dashboards • 30+ Chart Types • Talk-to-Data AI • Custom Builder • White-Label Ready</div>
+            <div style={{ fontSize: 12, color: t.textTertiary }}>{dashboards.length} Dashboards • 30+ Chart Types • Talk-to-Data AI • Custom Builder • White-Label Ready</div>
           </div>
           <div style={{ display: 'flex', gap: 16, fontSize: 12, color: t.textTertiary }}>
             <span>Data Freshness: <strong style={{ color: t.success }}>2 min ago</strong></span>

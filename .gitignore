@@ -1,3 +1,12 @@
 node_modules
 dist
 .vercel
+
+# Backend
+backend/.venv/
+backend/__pycache__/
+backend/.env
+__pycache__/
+
+# Build
+dist/

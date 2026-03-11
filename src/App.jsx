@@ -24,6 +24,9 @@ const DashboardBuilder = lazy(() => import('./modules/DashboardBuilder'));
 const DataManagement = lazy(() => import('./modules/DataManagement'));
 const ChartReference = lazy(() => import('./modules/ChartReference'));
 const Settings = lazy(() => import('./modules/Settings'));
+const DeeptalkOverview = lazy(() => import('./dashboards/DeeptalkOverview'));
+const DeeptalkBots = lazy(() => import('./dashboards/DeeptalkBots'));
+const TalkToDeeptalk = lazy(() => import('./modules/TalkToDeeptalk'));
 
 function LoadingFallback() {
   return (
@@ -61,6 +64,9 @@ export default function App() {
               <Route path="/builder" element={<DashboardBuilder />} />
               <Route path="/data" element={<DataManagement />} />
               <Route path="/chart-reference" element={<ChartReference />} />
+              <Route path="/deeptalk" element={<DeeptalkOverview />} />
+              <Route path="/deeptalk/bots" element={<DeeptalkBots />} />
+              <Route path="/talk-to-deeptalk" element={<TalkToDeeptalk />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </Suspense>
