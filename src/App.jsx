@@ -41,7 +41,7 @@ function LoadingFallback() {
 export default function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/analytics">
         <AppShell>
           <Suspense fallback={<LoadingFallback />}>
             <Routes>

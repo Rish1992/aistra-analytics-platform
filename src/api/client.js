@@ -1,5 +1,5 @@
-const DASHBOARD_API = 'http://localhost:8000';
-const TALK_TO_DB_API = 'http://localhost:8001';
+const DASHBOARD_API = '/api/dashboard';
+const TALK_TO_DB_API = '/api/talk-to-db';
 
 async function fetchJSON(url) {
   try {
